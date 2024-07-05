@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BEATS</title>
+    <script src="js/uuid.js"></script>
+</head>
+<body>
+<h1>Lista Prodotti Beats</h1>
+<ul id="productList"></ul>
+<button id="viewCartBtn">Visualizza Carrello</button>
+<ul id="listaCarrello" style="display: none"></ul>
+<script>
+    // get products
+    function getProducts() {
+        fetch('/midoripol/beats')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                displayProducts(data);
+            })
+            .catch(error => {
+                console.error('Si è verificato un errore:', error);
+            });
+    }
+    window.onload = getProducts;
+
+    // display products
+    function displayProducts(products) {
+        const productList = document.getElementById('productList');
+
+        productList.innerHTML = '';
+
+        products.forEach(product => {
+            console.log(product);
+            const listItem = document.createElement('li');
+            const btn = document.createElement('button');
+            btn.innerHTML = "add product";
+            const less = document.createElement('button');
+            less.innerHTML = "less";
+            listItem.innerHTML = `
+            ID: ${product.id ? product.id : 'N/A'} -
+            Nome: ${product.name ? product.name : 'N/A'} -
+            Categoria: ${product.category ? product.category : 'N/A'} -
+            Prezzo: ${product.price ? product.price : 'N/A'}
+            `;
+            listItem.append(btn, less);
+
+            btn.addEventListener('click', function () {
+                const nome = product.name;
+                const productId = product.id;
+                const quantita = 1;  // Assuming adding one item at a time
+                const categoria = product.category;
+                const userId = getUserId();
+                addProductToCart(nome, productId, quantita, categoria, userId);
+            });
+
+            less.addEventListener('click', function () {
+                const productId = product.id;
+                const quantita = -1;  // Assuming removing one item at a time
+                const userId = getUserId();
+                lessProductToCart(productId, quantita, userId);
+            });
+            productList.append(listItem);
+        });
+    }
+
+    // generate UserId
+    function generateUniqueId() {
+        const timestamp = new Date().getTime(); // Ottieni il timestamp corrente
+        const random = Math.floor(Math.random() * 1000000); // Genera un numero casuale tra 0 e 999999
+        return (timestamp << 20) | random; // Combina il timestamp con il numero casuale
+    }
+
+    // Get user ID
+    function getUserId() {
+        let userId = localStorage.getItem('userId');
+        if (!userId) {
+            userId = generateUniqueId();
+            localStorage.setItem('userId', userId);
+        }
+        console.log("userId", userId);
+        return userId;
+    }
+
+    // retrieve user cart
+    let viewCartBtn = document.getElementById('viewCartBtn');
+    viewCartBtn.addEventListener('click', viewUserCart);
+
+    function viewUserCart() {
+        const userId = getUserId();
+        fetch(`/midoripol/carrello/viewCart?userId=${userId}`)
+            .then(response => response.json())
+            .then(cart => {
+                console.log('Carrello dell\'utente:', cart);
+                displayCart(cart);
+            })
+            .catch(error => {
+                console.error('Si è verificato un errore durante il recupero del carrello:', error);
+            });
+    }
+
+    // Funzione per recuperare il carrello dell'utente
+    function getUserCart() {
+        const userId = getUserId();
+        return fetch(`/midoripol/carrello/viewCart?userId=${userId}`)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return { cartProducts: [] }; // Restituisci un carrello vuoto se non esiste
+                }
+            })
+            .catch(error => {
+                console.error('Si è verificato un errore durante il recupero del carrello:', error);
+                return { cartProducts: [] }; // Restituisci un carrello vuoto in caso di errore
+            });
+    }
+
+    // Funzione per visualizzare il carrello dell'utente
+    function displayCart(cart) {
+        const listaCarrello = document.getElementById("listaCarrello");
+        listaCarrello.innerHTML = '';
+        cart.cartProducts.forEach(product => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+            Nome: ${product.name}
+            Quantità: ${product.quantity}
+            Categoria: ${product.category}
+        `;
+            listaCarrello.append(listItem);
+        });
+        // Toggle display logic outside the loop
+        if (listaCarrello.style.display != "block") {
+            listaCarrello.style.display = "block";
+        } else {
+            listaCarrello.style.display = "none";
+        }
+    }
+
+    // controllo nel carrello se l'exclusive è a 1
+    function exclusiveInCart(cart) {
+        const exclusiveProduct = cart.cartProducts.filter(product => product.category === "EXCLUSIVE");
+        return exclusiveProduct.length > 0 && exclusiveProduct[0].quantity === 1;
+    }
+
+    // adding product
+    function addProductToCart(nome, productId, quantita, categoria, userId) {
+        const data = {
+            name: nome,
+            id: parseInt(productId),
+            quantity: quantita,
+            category: categoria,
+            userId: userId,
+        };
+        // Recupero il carrello per eventuali controlli
+        getUserCart().then(cart => {
+            if (exclusiveInCart(cart) && categoria === "EXCLUSIVE") {
+                console.log("Exclusive già nel carrello");
+                return;
+            } else {
+                fetch('/midoripol/carrello/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Prodotto aggiunto con successo al carrello.');
+                            alert('Prodotto aggiunto con successo al carrello.');
+                        } else {
+                            console.error('Errore durante l\'aggiunta del prodotto al carrello.');
+                            alert('Errore durante l\'aggiunta del prodotto al carrello.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Si è verificato un errore durante la richiesta:', error);
+                        alert('Si è verificato un errore durante la richiesta. Si prega di riprovare più tardi.');
+                    });
+            }
+        });
+    }
+
+    function lessProductToCart(productId, quantita, userId) {
+        const data = {
+            id: parseInt(productId),
+            quantity: quantita,
+            userId: userId,
+        };
+
+        console.log('Data sent to server:', data); // Stampa i dati inviati al server
+
+        fetch('/midoripol/carrello/less', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('-1 prodotto dal carrello.');
+                    alert('Prodotto rimosso con successo dal carrello.');
+                } else {
+                    console.error('Errore durante la rimozione del prodotto dal carrello.');
+                    alert('Errore durante la rimozione del prodotto dal carrello.');
+                }
+            })
+            .catch(error => {
+                console.error('Si è verificato un errore durante la richiesta:', error);
+                alert('Si è verificato un errore durante la richiesta. Si prega di riprovare più tardi.');
+            });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form</title>
+</head>
+<body>
+<h1>Lista Prodotti Beats</h1>
+<ul id="productList"></ul>
+<form id="personForm">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name"><br><br>
+    <label for="age">Age:</label>
+    <input type="text" id="age" name="age"><br><br>
+    <button type="submit">Save</button>
+</form>
+
+<script>
+    document.getElementById("personForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // Evita l'invio del modulo predefinito
+        var name = document.getElementById("name").value;
+        var age = document.getElementById("age").value;
+        var data = {
+            name: name,
+            age: age
+        };
+        fetch("http://localhost:8080/midoripol/persons", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+            .then(function(response) {
+                if (response.ok) {
+                    console.log("Persistenza riuscita");
+                } else {
+                    console.log("Persistenza fallita");
+                }
+            })
+            .catch(function(error) {
+                console.log("Errore durante la richiesta:", error);
+            });
+    });
+
+
+    // -------------
+
+    // get products
+    function getProducts() {
+        fetch('http://localhost:8080/midoripol/persons')
+            .then(response => response.json())
+            .then(data => {
+                displayProducts(data);
+            })
+            .catch(error => {
+                console.error('Si è verificato un errore:', error);
+            });
+    }
+
+    // display products
+    function displayProducts(products) {
+        const productList = document.getElementById('productList');
+        productList.innerHTML = '';
+        products.forEach(product => {
+            console.log(product);
+            const listItem = document.createElement('li');
+            const btn = document.createElement('button');
+            btn.innerHTML = "add product"
+            listItem.textContent = `
+            ${product.id}: ${product.name} -
+            categoria  ${product.category} - Prezzo: ${product.price} - `;
+            listItem.append(btn)
+            btn.addEventListener ('click', function() {
+                const id = product.id;
+                const name = product.name;
+                const quantity = product.quantity;
+                const category = product.category;
+                addProductToCart (id, name, quantity, category);
+            });
+            productList.append (listItem);
+        });
+    }
+
+    window.onload = getProducts;
+
+    // adding product
+    function addProductToCart(id, name, quantity, category) {
+        /*
+        const name = document.getElementById("name").value;
+        const age = document.getElementById("age").value;
+        */
+        const product = {
+            id: id,
+            name: name,
+            quantity: quantity,
+            category: category.toString(),
+            // name: name,
+            // age: age
+        };
+
+        // Invia la richiesta POST al server per aggiungere il prodotto al carrello dell'utente
+        fetch('http://localhost:8080/midoripol/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify (product)
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Prodotto aggiunto al carrello');
+                } else {
+                    console.error('Errore durante l\'aggiunta del prodotto al carrello');
+                }
+            })
+            .catch(error => {
+                console.error('Si è verificato un errore:', error);
+            });
+    }
+
+
+</script>
+</body>
+</html>
