@@ -14,8 +14,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -36,6 +36,11 @@
       <artifactId>junit-vintage-engine</artifactId>
       <version>5.9.1</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-servlet-initializer</artifactId>
+      <version>5.0.7.Final</version>
     </dependency>
     <!-- H2 DATABASE -->
     <dependency>
@@ -105,6 +110,13 @@
       <artifactId>log4j-core</artifactId>
       <version>2.23.1</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat</groupId>
+      <artifactId>tomcat-catalina</artifactId>
+      <version>7.0.42</version>
+    </dependency>
+
+
   </dependencies>
 
   <build>
@@ -142,15 +154,15 @@
           <version>2.8.2</version>
         </plugin>
       </plugins>
+
     </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version> <!-- Aggiorna alla versione più recente -->
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.2.2</version> <!-- Assicurati di utilizzare la versione più recente -->
         <configuration>
-          <source>8</source>
-          <target>8</target>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
         </configuration>
       </plugin>
 
