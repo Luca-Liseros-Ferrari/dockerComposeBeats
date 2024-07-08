@@ -1,6 +1,5 @@
 USE newdb;
 
--- Creazione delle tabelle
 CREATE TABLE IF NOT EXISTS Cart (
                                     id BIGINT NOT NULL AUTO_INCREMENT,
                                     person_id VARCHAR(255),
@@ -35,7 +34,6 @@ CREATE TABLE IF NOT EXISTS Product (
     PRIMARY KEY (id)
     ) ENGINE=InnoDB;
 
--- Aggiunta delle chiavi esterne
 ALTER TABLE Cart
     ADD CONSTRAINT FKhe5i4658h2dl4skkbg9e8tuvf
         FOREIGN KEY (person_id)
@@ -56,7 +54,6 @@ ALTER TABLE CartProduct
         FOREIGN KEY (product_id)
             REFERENCES Product (id);
 
--- Inserimento dei dati nella tabella Product
 INSERT INTO Product (id, category, description, img, name, price, quantity)
 VALUES (1, 0, 'prodotto basic', '../../assets/images/beats/Free Space.jpg', 'Free Space', 30, 1);
 
