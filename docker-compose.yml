@@ -1,7 +1,28 @@
-version: "3"
+version: '3.8'
+
+networks:
+  mynetwork:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.21.0.0/16"  # Cambia il subnet a un valore diverso da quello in conflitto
+          gateway: "172.21.0.1"    # Cambia il gateway di conseguenza, se necessario
+
 services:
+  web:
+    image: tomcat:9-jdk17-openjdk
+    container_name: web
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./tomcat/webapps/midoripol.war:/usr/local/tomcat/webapps/ROOT.war
+    networks:
+      - mynetwork
+
   db:
     image: mysql:latest
+    container_name: db
     environment:
       MYSQL_ROOT_PASSWORD: edam15!k2Mp_
       MYSQL_DATABASE: newdb
@@ -12,20 +33,3 @@ services:
       - ./db:/docker-entrypoint-initdb.d
     networks:
       - mynetwork
-
-  web:
-    image: tomcat:latest
-    environment:
-      JDBC_URL: jdbc:mysql://db:3306/newdb?connectTimeout=0&socketTimeout=0&autoReconnect=true
-      JDBC_USER: root
-      JDBC_PASS: edam15!k2Mp_
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./tomcat/webapps:/usr/local/tomcat/webapps
-    networks:
-      - mynetwork
-
-networks:
-  mynetwork:
-    driver: bridge
